@@ -1,4 +1,5 @@
 import { removeToken } from 'helpers/localStorageToken';
+import * as process from 'process';
 import toast from 'react-hot-toast';
 
 const devServer = 'http://localhost:8000';

@@ -315,7 +315,13 @@ async def oauth_login(provider_id: str, request: Request):
     response = RedirectResponse(
         url=f"{provider.authorize_url}?{params}",
     )
-    response.set_cookie("oauth_state", random, httponly=True, max_age=3 * 60)
+    response.set_cookie(
+        "oauth_state",
+        random,
+        httponly=True,
+        samesite=os.getenv("SAME_SITE", default="lax"),
+        max_age=3 * 60,
+    )
     return response
 
 

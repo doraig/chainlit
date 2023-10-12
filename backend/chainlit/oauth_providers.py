@@ -1,4 +1,5 @@
 import os
+import sys
 import urllib.parse
 from typing import Dict, List, Optional, Tuple
 
@@ -23,6 +24,62 @@ class OAuthProvider:
 
     async def get_user_info(self, token: str) -> Tuple[Dict[str, str], AppUser]:
         raise NotImplementedError()
+
+
+class DeveloperPortalOAuthProvider(OAuthProvider):
+    id = "pointclickcare"
+    env = ["OAUTH_DEVP_CLIENT_ID", "OAUTH_DEVP_CLIENT_SECRET"]
+    authorize_url = os.environ.get("OAUTH_DEVP_AUTH_URL")
+
+    def __init__(self):
+        self.client_id = os.environ.get("OAUTH_DEVP_CLIENT_ID")
+        self.client_secret = os.environ.get("OAUTH_DEVP_CLIENT_SECRET")
+        self.authorize_params = {
+            "scope": "email openid",
+            "response_type": "code",
+        }
+
+    async def get_token(self, code: str, url: str):
+        payload = {
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": os.environ.get("OAUTH_CALLBACK_URL"),
+        }
+        async with aiohttp.ClientSession(
+            trust_env=True, raise_for_status=True
+        ) as session:
+            async with session.post(
+                os.environ.get("OAUTH_DEVP_TOKEN_URL"),
+                json=payload,
+            ) as result:
+                text = await result.json()
+                token = text["access_token"]
+                sys.stdout.write(token)
+
+                if not token:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Failed to get the access token from developer portal",
+                    )
+                return token
+
+    async def get_user_info(self, token: str):
+        async with aiohttp.ClientSession(
+            trust_env=True, raise_for_status=True
+        ) as session:
+            async with session.get(
+                os.environ.get("OAUTH_DEVP_USER_URL"),
+                headers={"Authorization": f"Bearer {token}"},
+            ) as result:
+                user = await result.json()
+                app_user = AppUser(
+                    username=user["username"],
+                    image=user["website"],
+                    provider="pointclickcare",
+                )
+                return (user, app_user)
 
 
 class GithubOAuthProvider(OAuthProvider):
@@ -331,6 +388,7 @@ providers = [
     AzureADOAuthProvider(),
     OktaOAuthProvider(),
     Auth0OAuthProvider(),
+    DeveloperPortalOAuthProvider(),
 ]
 
 

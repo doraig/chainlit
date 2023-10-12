@@ -1,3 +1,4 @@
+import { MdOutlineAdb } from 'react-icons/md';
 import { useRecoilValue } from 'recoil';
 
 import { Stack, Typography } from '@mui/material';
@@ -21,14 +22,10 @@ export default function WaterMark() {
           textDecoration: 'none'
         }}
       >
-        <Typography fontSize="12px" color="text.secondary">
-          Built with
+        <Typography fontSize="12px" color="text.secondary" mr={2}>
+          Developer Program Bot
         </Typography>
-        <img
-          src={src}
-          alt="watermark"
-          style={{ width: 65, filter: 'grayscale(1)', marginLeft: '4px' }}
-        />
+        <MdOutlineAdb />
       </a>
     </Stack>
   );
